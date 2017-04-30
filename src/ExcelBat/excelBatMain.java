@@ -68,6 +68,7 @@ public class excelBatMain extends Frame implements ActionListener{
 	{
 		try {
 			UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+			//使用Windows风格的界面，主要针对文件选择器。
 		} catch (ClassNotFoundException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -154,6 +155,7 @@ public class excelBatMain extends Frame implements ActionListener{
 	{
 		if(e.getSource()==jbSFChose)
 		{
+			//利用文件选择器选择源文件。
 			JFileChooser jfcSF=new JFileChooser();  
 			jfcSF.setDialogTitle("请选择Excel源文件");
 			FileNameExtensionFilter filter = new FileNameExtensionFilter("Excel文件(*.xls)", "xls");
@@ -167,8 +169,9 @@ public class excelBatMain extends Frame implements ActionListener{
 		}
 		if(e.getSource()==jbDFChose)
 		{
+			//利用文件选择器选择目标文件。
 			JFileChooser jfcDF=new JFileChooser();  
-			jfcDF.setDialogTitle("请选择Excel目的文件");
+			jfcDF.setDialogTitle("请选择Excel目标文件");
 			FileNameExtensionFilter filter = new FileNameExtensionFilter("Excel文件(*.xls)", "xls");
 		    jfcDF.setFileFilter(filter);
 		    int returnVal =  jfcDF.showOpenDialog(null);
@@ -185,9 +188,11 @@ public class excelBatMain extends Frame implements ActionListener{
 	            public void run() {
 	            	excelBat();
 	            }}).start();
+		//利用多线程进行批处理过程，这样可以确保主线程及时刷新界面。
 		}
 	}
     private  void  excelBat(){
+    	//该方法对用户所填信息进行验证。利用iState变量标记准备状态。
 		iState=0;
 		strSFColumn=jtSFColumn.getText();
 		try {
@@ -204,6 +209,7 @@ public class excelBatMain extends Frame implements ActionListener{
 		    jlState.setText("目标文件对比列数输入错误！");
 		}
 		strSFInfoColumn=jtSFInfoColumn.getText();
+		//下面对输入的所需信息列数进行处理，如果只需要一列，则不包含空格，多列则包含空格，需要切割字符串。
 		if(strSFInfoColumn.indexOf(" ")!=-1)
 		{
 			String str[] = strSFInfoColumn.split(" ");  
@@ -248,6 +254,7 @@ public class excelBatMain extends Frame implements ActionListener{
 		{
 			try {
 				 jlState.setText("开始处理！");
+				 //传递参数进行Excel处理。
 				excelChange(fileSF,fileDF,iSFColumn,iDFColumn,iSFInfoColumn);
 				 jlState.setText("处理成功！");
 			} catch (WriteException e1) {
@@ -269,21 +276,25 @@ public class excelBatMain extends Frame implements ActionListener{
 	
 	private void excelChange(File fileS,File fileD,int intSFColumn,int intDFColumn,int[] intSFInfoColumn) throws IOException, WriteException, BiffException
 	   {
+		//该方法完成对Excel的处理。
 	       InputStream streamSF = new FileInputStream(fileS);
 	       Workbook wbSF = Workbook.getWorkbook(streamSF);
 	       Sheet sheetSF = wbSF.getSheet(0);  
 	       InputStream streamDF = new FileInputStream(fileD);
 	       Workbook wbDF = Workbook.getWorkbook(streamDF);
 	       Sheet sheetDF = wbDF.getSheet(0);  
+	       //这里将新文件保存为目标文件名_2。
 	       File xlsFile = new File(fileD.getAbsolutePath().substring(0,fileD.getAbsolutePath().lastIndexOf('.'))+"_2.xls");
-	       // 创建一个工作簿
+	       // 创建一个可编辑的工作簿
 	       WritableWorkbook wbNewFile = Workbook.createWorkbook(xlsFile);
-	       // 创建一个工作表
+	       // 创建一个可编辑的工作表
 	       WritableSheet sheetNF = wbNewFile.createSheet("sheet1", 0);
+	       //获得文件的参数。
 	       int rowSF = sheetSF.getRows();
 	       int rowDF = sheetDF.getRows();
 	       int colDF = sheetDF.getColumns();
 	       jlState.setText("正在对目标文件进行处理！");
+	       //首先将目标文件已有的全部内容复制到新文件中。
 	       for(int i = 0;i<rowDF;i++)
 	       {
 	    	   for (int j=0;j<colDF;j++)
@@ -294,7 +305,7 @@ public class excelBatMain extends Frame implements ActionListener{
         		   sheetNF.addCell(label);
 	    	   }
 	       }
-	       
+	       //确定新文件添加列的列数，并将标题行由源文件复制到新文件。
 	       int[] colNDF=new int[intSFInfoColumn.length];
 	       for(int i = 0;i<intSFInfoColumn.length;i++)
 	       {
@@ -304,34 +315,37 @@ public class excelBatMain extends Frame implements ActionListener{
               	Label label = new Label(colNDF[i], 0, TempS); 
               	sheetNF.addCell(label);
 	       }
+	       //开始进行比对。
 	       for(int i = 1;i<rowDF;i++)
 	       {
 	    	   int  ii=i+1;
 	    	   jlState.setText("正在处理第"+ii+"行数据。");
 	    	   Cell cDF = sheetDF.getCell(intDFColumn, i);
 	           String strDF = cDF.getContents();
-	           System.out.println("I="+i);
+//	           System.out.println("I="+i);
 	           for (int j=1;j<rowSF;j++)
 	           {
-	           	Cell cSF = sheetSF.getCell(intSFColumn, j);
+	        	   Cell cSF = sheetSF.getCell(intSFColumn, j);
 	               String strSF = cSF.getContents();
-	           System.out.println("J="+j);
-	           System.out.println(strDF);
-	           System.out.println(strSF);
+//	           System.out.println("J="+j);
+//	           System.out.println(strDF);
+//	           System.out.println(strSF);
 	               if(strDF.equals(strSF))
 	               {
+	            	   //如果比对成功，逐列将所需信息从源文件复制到新文件中。
 	            	   for(int k = 0;k<intSFInfoColumn.length;k++)
 	            	   {
 	            		   Cell TempC = sheetSF.getCell(intSFInfoColumn[k], j);
 	            		   String TempS = TempC.getContents();
 	            		   Label label = new Label(colNDF[k], i, TempS); 
 	            		   sheetNF.addCell(label);
-	            		   System.out.println("K="+k);
+//	            		   System.out.println("K="+k);
 	            	   }
 	            	   break;
 	               }
 	           }
 	       }
+	       //保存新文件。
 	       wbNewFile.write();
 	       wbNewFile.close();
 	   }
